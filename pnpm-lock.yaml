@@ -42,6 +42,22 @@ importers:
         specifier: 3.23.8
         version: 3.23.8
 
+  packages/agent-runner: {}
+
+  packages/bench-cli: {}
+
+  packages/evaluator: {}
+
+  packages/mock-adt-server: {}
+
+  packages/prompt-builder: {}
+
+  packages/report: {}
+
+  packages/runner-mastracode: {}
+
+  packages/scenarios: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':
