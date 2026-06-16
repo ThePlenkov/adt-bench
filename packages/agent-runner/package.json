@@ -1,0 +1,12 @@
+{
+  "name": "@adt-bench/agent-runner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run packages/agent-runner/src",
+    "typecheck": "tsc --noEmit -p packages/agent-runner/tsconfig.json"
+  }
+}

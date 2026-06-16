@@ -1,0 +1,11 @@
+{
+  "name": "@adt-bench/bench-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run packages/bench-cli/src",
+    "typecheck": "tsc --noEmit -p packages/bench-cli/tsconfig.json"
+  }
+}

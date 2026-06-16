@@ -1,0 +1,18 @@
+{
+  "name": "adt-bench",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "{workspaceRoot}/tsconfig.base.json"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
+    ]
+  },
+  "targetDefaults": {
+    "build": { "cache": true, "inputs": ["production", "^production"] },
+    "test": { "cache": true, "inputs": ["default"] },
+    "lint": { "cache": true, "inputs": ["default"] },
+    "typecheck": { "cache": true, "inputs": ["default"] }
+  },
+  "defaultBase": "main"
+}

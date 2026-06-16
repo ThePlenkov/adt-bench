@@ -1,0 +1,35 @@
+{
+  "name": "adt-bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent-first benchmark runner for ABAP scenarios. Configures skills + MCP, runs an agent, evaluates the result.",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "typecheck": "nx run-many -t typecheck",
+    "spec-check": "node tools/spec-check.mjs",
+    "bench:smoke": "tsx packages/bench-cli/src/smoke.ts",
+    "bench:run": "tsx packages/bench-cli/src/run.ts",
+    "bench:report": "tsx packages/bench-cli/src/report.ts",
+    "verify": "pnpm run spec-check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run bench:smoke"
+  },
+  "devDependencies": {
+    "@nx/js": "20.3.0",
+    "nx": "20.3.0",
+    "typescript": "5.6.3",
+    "tsx": "4.19.2",
+    "vitest": "2.1.4",
+    "eslint": "9.14.0",
+    "@typescript-eslint/parser": "8.13.0",
+    "@typescript-eslint/eslint-plugin": "8.13.0",
+    "zod": "3.23.8",
+    "ulid": "2.3.0",
+    "yaml": "2.6.0"
+  }
+}

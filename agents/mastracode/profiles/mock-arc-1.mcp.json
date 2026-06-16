@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "abap": {
+      "command": "npx",
+      "args": ["-y", "arc-1@latest", "--stdio"],
+      "env": {
+        "ABAP_URL": "http://127.0.0.1:8080",
+        "ABAP_USER": "demo",
+        "ABAP_PASSWORD": "demo"
+      }
+    }
+  }
+}

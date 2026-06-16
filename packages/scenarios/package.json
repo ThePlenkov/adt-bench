@@ -1,0 +1,11 @@
+{
+  "name": "@adt-bench/scenarios",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run packages/scenarios/src",
+    "typecheck": "tsc --noEmit -p packages/scenarios/tsconfig.json"
+  }
+}

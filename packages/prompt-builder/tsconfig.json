@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "../scenarios/src/**/*.ts",
+    "../agent-runner/src/**/*.ts"
+  ]
+}

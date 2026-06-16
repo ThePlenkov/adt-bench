@@ -1,0 +1,11 @@
+{
+  "name": "@adt-bench/mock-adt-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run packages/mock-adt-server/src",
+    "typecheck": "tsc --noEmit -p packages/mock-adt-server/tsconfig.json"
+  }
+}

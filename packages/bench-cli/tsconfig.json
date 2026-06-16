@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "../agent-runner/src/**/*.ts",
+    "../scenarios/src/**/*.ts",
+    "../prompt-builder/src/**/*.ts",
+    "../evaluator/src/**/*.ts",
+    "../report/src/**/*.ts",
+    "../mock-adt-server/src/**/*.ts",
+    "../runner-mastracode/src/**/*.ts"
+  ]
+}

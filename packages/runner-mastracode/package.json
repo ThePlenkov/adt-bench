@@ -1,0 +1,11 @@
+{
+  "name": "@adt-bench/runner-mastracode",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run packages/runner-mastracode/src",
+    "typecheck": "tsc --noEmit -p packages/runner-mastracode/tsconfig.json"
+  }
+}
