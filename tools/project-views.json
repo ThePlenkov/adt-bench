@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "project": {
+    "owner": "abapify",
+    "number": 4,
+    "url": "https://github.com/orgs/abapify/projects/4"
+  },
+  "fields": {
+    "status": "PVTSSF_lADOBnAdbs4Ba3CszhVrmCE",
+    "priority": "PVTSSF_lADOBnAdbs4Ba3CszhVrmIY",
+    "milestone": "PVTF_lADOBnAdbs4Ba3CszhVrmCc",
+    "parent_issue": "PVTF_lADOBnAdbs4Ba3CszhVrmCw",
+    "sub_issues_progress": "PVTF_lADOBnAdbs4Ba3CszhVrmC0"
+  },
+  "status_options": {
+    "todo": "f75ad846",
+    "in_progress": "47fc9ee4",
+    "done": "98236657"
+  },
+  "priority_options": {
+    "p0": "2ee17ed5",
+    "p1": "e4132e51",
+    "p2": "fc1171f9"
+  },
+  "views": [
+    {
+      "id": "TBD-roadmap",
+      "name": "Roadmap",
+      "layout": "ROADMAP_LAYOUT",
+      "filter": "is:open",
+      "group_by": ["milestone"],
+      "sort_by": [{ "field": "priority", "direction": "ASC" }],
+      "visible_fields": ["title", "status", "priority", "sub_issues_progress", "milestone"]
+    },
+    {
+      "id": "TBD-active-work",
+      "name": "Active work",
+      "layout": "BOARD_LAYOUT",
+      "filter": "is:open -status:Done",
+      "group_by": ["status"],
+      "sort_by": [
+        { "field": "priority", "direction": "ASC" },
+        { "field": "title", "direction": "ASC" }
+      ],
+      "visible_fields": ["title", "assignees", "priority", "sub_issues_progress"]
+    },
+    {
+      "id": "TBD-next-up",
+      "name": "Next up",
+      "layout": "TABLE_LAYOUT",
+      "filter": "is:open status:Todo (priority:P0 OR priority:P1)",
+      "group_by": ["priority"],
+      "sort_by": [{ "field": "priority", "direction": "ASC" }],
+      "visible_fields": ["title", "milestone", "sub_issues_progress"]
+    },
+    {
+      "id": "TBD-v1.1-epic-tree",
+      "name": "v1.1 epic tree",
+      "layout": "TABLE_LAYOUT",
+      "filter": "is:open milestone:v1.1",
+      "group_by": ["parent_issue"],
+      "sort_by": [],
+      "visible_fields": ["title", "status", "priority", "sub_issues_progress", "blocked_by"]
+    },
+    {
+      "id": "TBD-by-owner",
+      "name": "All work by owner",
+      "layout": "BOARD_LAYOUT",
+      "filter": "is:open",
+      "group_by": ["assignees"],
+      "sort_by": [{ "field": "priority", "direction": "ASC" }],
+      "visible_fields": ["title", "status", "priority", "milestone"]
+    },
+    {
+      "id": "TBD-unmilestoned",
+      "name": "Backlog (unmilestoned)",
+      "layout": "TABLE_LAYOUT",
+      "filter": "is:open no:milestone",
+      "group_by": [],
+      "sort_by": [{ "field": "priority", "direction": "ASC" }],
+      "visible_fields": ["title", "priority", "labels"]
+    }
+  ],
+  "notes": [
+    "GitHub Projects v2 GraphQL API does not currently expose view creation (no createProjectV2View mutation).",
+    "Until that lands, views are created manually in the web UI. See docs/project-views.md for the per-view setup recipe.",
+    "When GitHub ships the mutation, this file becomes the source of truth and a small tool (tools/apply-views.mjs) can iterate views[] and call createProjectV2View for each."
+  ]
+}

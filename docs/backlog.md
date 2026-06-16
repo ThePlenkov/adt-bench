@@ -1,6 +1,8 @@
 # Backlog
 
-Tracked in [the GitHub Project board](https://github.com/users/ThePlenkov/projects/3) and as [GitHub Issues](https://github.com/abapify/adt-bench/issues) (label `v1.1`, `v1.2`, or `v2`).
+Tracked in the org-level [GitHub Project board](https://github.com/orgs/abapify/projects/4) and as [GitHub Issues](https://github.com/abapify/adt-bench/issues) (label `v1.1`, `v1.2`, or `v2`).
+
+For the 6 recommended project-board views (Roadmap, Active work, Next up, v1.1 epic tree, All work by owner, Backlog unmilestoned) and their filters, see [docs/project-views.md](project-views.md). The machine-readable spec is in [tools/project-views.json](../tools/project-views.json).
 
 ## Dependency graph (v1.1 epic)
 
