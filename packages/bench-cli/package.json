@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "test": "vitest run packages/bench-cli/src",
-    "typecheck": "tsc --noEmit -p packages/bench-cli/tsconfig.json"
+    "test": "vitest run src --passWithNoTests",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   }
 }
