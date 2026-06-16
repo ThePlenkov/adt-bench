@@ -276,6 +276,55 @@ async function checkSkills() {
   for (const e of entries) {
     if (!e.isDirectory()) continue;
     foundAny = true;
+
+    // A sub-directory whose name starts with `_` is a meta-skill
+    // container. We recurse into it (one level only) and apply
+    // the same checks. Meta-skill bodies are exempt from the
+    // forbidden-tool check.
+    if (e.name.startsWith('_')) {
+      let subEntries;
+      try {
+        subEntries = await readdir(join(skillsDir, e.name), { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const sub of subEntries) {
+        if (!sub.isDirectory()) continue;
+        foundAny = true;
+        const isMeta = true; // always meta here
+        const skillFile = join(skillsDir, e.name, sub.name, 'SKILL.md');
+        let content;
+        try {
+          content = await readFile(skillFile, 'utf8');
+        } catch {
+          fail('skills', `${e.name}/${sub.name}/SKILL.md is missing`);
+          continue;
+        }
+        const body = content.replace(/^---[\s\S]*?---\s*/m, '');
+        if (!isMeta) {
+          for (const forbidden of FORBIDDEN_IN_SKILLS) {
+            const re = new RegExp(`\\b${forbidden}\\b`, 'i');
+            if (re.test(body)) {
+              fail('skills', `${e.name}/${sub.name}/SKILL.md mentions forbidden tool-specific term "${forbidden}"`);
+            }
+          }
+        }
+        const fm = content.match(/^---\n([\s\S]*?)\n---/);
+        if (fm) {
+          const nameMatch = fm[1].match(/^name:\s*(.+)$/m);
+          if (nameMatch) {
+            const declared = nameMatch[1].trim();
+            if (declared !== sub.name) {
+              fail('skills', `${e.name}/${sub.name}/SKILL.md has name="${declared}" (must match directory)`);
+            }
+          }
+        }
+        ok('skills', `${e.name}/${sub.name}/SKILL.md is clean`);
+      }
+      continue;
+    }
+
+    const isMeta = false;
     const skillFile = join(skillsDir, e.name, 'SKILL.md');
     let content;
     try {
@@ -286,10 +335,12 @@ async function checkSkills() {
     }
     // Strip the frontmatter block before checking for forbidden content
     const body = content.replace(/^---[\s\S]*?---\s*/m, '');
-    for (const forbidden of FORBIDDEN_IN_SKILLS) {
-      const re = new RegExp(`\\b${forbidden}\\b`, 'i');
-      if (re.test(body)) {
-        fail('skills', `${e.name}/SKILL.md mentions forbidden tool-specific term "${forbidden}"`);
+    if (!isMeta) {
+      for (const forbidden of FORBIDDEN_IN_SKILLS) {
+        const re = new RegExp(`\\b${forbidden}\\b`, 'i');
+        if (re.test(body)) {
+          fail('skills', `${e.name}/SKILL.md mentions forbidden tool-specific term "${forbidden}"`);
+        }
       }
     }
     // The name in the frontmatter must match the directory name

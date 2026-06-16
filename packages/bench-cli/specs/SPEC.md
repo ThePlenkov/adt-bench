@@ -52,8 +52,10 @@ Entry-point scripts (not exported, but part of the contract):
 
 ### 3.1 `loadSkillFragments(skillsSourceDir)`
 
-- Reads `skillsSourceDir` non-recursively.
+- If `skillsSourceDir` does not exist, returns `[]` (no throw).
+- Otherwise, reads `skillsSourceDir` non-recursively.
 - For each child directory, attempts to read `<child>/SKILL.md`.
+  - Skips subdirectories whose name starts with `_` (e.g. `_meta`).
 - Returns the array of file contents. Empty array if no SKILL.md
   files are found.
 - Skips files that fail to read (e.g. permission errors). Does NOT
@@ -165,10 +167,19 @@ The `src/smoke.ts` entry-point:
 
 ## 6. Test matrix
 
-The harness is exercised end-to-end by `pnpm bench:smoke`. The
-package itself has no unit tests in v1.1 (covered by the smoke
-run + the per-package tests in `@adt-bench/report` and
-`@adt-bench/evaluator`).
+The harness is exercised end-to-end by `pnpm bench:smoke` AND
+by the following unit tests in `packages/bench-cli/src/cli.spec.ts`:
+
+| Test name | Covers contract |
+|---|---|
+| `loadSkillFragments > reads every SKILL.md one level deep` | §3.1 |
+| `loadSkillFragments > skips directories whose name starts with _` | §3.1 |
+| `loadSkillFragments > returns empty array for missing directory` | §3.1 |
+| `loadSkillFragments > skips a skill directory with no SKILL.md` | §3.1 |
+
+These tests cover the only function in this package that has
+non-trivial behavior worth unit-testing. The end-to-end
+`runSmoke` path is exercised by the smoke CI step (issue #6).
 
 ## 7. Non-goals
 

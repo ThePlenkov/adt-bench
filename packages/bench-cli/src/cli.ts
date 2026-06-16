@@ -37,9 +37,19 @@ export interface RunOutcome {
  */
 export async function loadSkillFragments(skillsSourceDir: string): Promise<string[]> {
   const out: string[] = [];
-  const entries = await readdir(skillsSourceDir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = await readdir(skillsSourceDir, { withFileTypes: true });
+  } catch {
+    // skillsSourceDir does not exist; treat as empty.
+    return out;
+  }
   for (const e of entries) {
     if (e.isDirectory()) {
+      // Skip subdirectories whose name starts with `_` (e.g. `_meta`).
+      // These contain skills for humans / coding agents, not for the
+      // ABAP agent at run time.
+      if (e.name.startsWith('_')) continue;
       const skillFile = join(skillsSourceDir, e.name, 'SKILL.md');
       try {
         out.push(await readFile(skillFile, 'utf8'));
