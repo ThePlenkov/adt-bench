@@ -15,16 +15,16 @@
  *
  * Exit code 0 = all good. Exit code 1 = at least one violation.
  */
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import {
+  walk,
+  effectiveMtime,
+  commitTimesUnder,
+  newestEffectiveMtime,
+  root,
+} from './lib/git-mtime.mjs';
 
-const execFileP = promisify(execFile);
-
-const here = fileURLToPath(new URL('.', import.meta.url));
-const root = join(here, '..');
 const packagesDir = join(root, 'packages');
 const skillsDir = join(root, 'packages', 'skills', '.agents', 'skills');
 
@@ -37,111 +37,6 @@ function fail(pkg, msg) {
 
 function ok(pkg, msg) {
   console.log(`  OK:   ${msg}`);
-}
-
-/* -------------------- helpers -------------------- */
-
-async function* walk(dir) {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return; // dir does not exist
-  }
-  for (const e of entries) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) {
-      if (e.name === 'node_modules' || e.name === 'dist' || e.name === '.git') continue;
-      yield* walk(p);
-    } else {
-      yield p;
-    }
-  }
-}
-
-async function newestMtime(files) {
-  let max = 0;
-  for (const f of files) {
-    try {
-      const s = await stat(f);
-      if (s.mtimeMs > max) max = s.mtimeMs;
-    } catch {}
-  }
-  return max;
-}
-
-/* Issue #11: filesystem-mtime comparisons are unreliable on fresh
- * checkouts / git worktrees where wall-clock mtimes don't match
- * commit-time ordering. Use git commit time as the source of
- * truth, with filesystem mtime as the override for dirty/uncommitted
- * files. Mirrors the logic in tools/spec-mtime.mjs. */
-function rel(file) {
-  return file.startsWith(root + '/') ? file.slice(root.length + 1) : file;
-}
-
-async function commitTimesUnder(dir) {
-  const out = new Map();
-  let res;
-  try {
-    res = await execFileP(
-      'git',
-      [
-        'log',
-        '--pretty=format:COMMIT_TIME %ct',
-        '--name-only',
-        '--no-renames',
-        '-z',
-        'HEAD',
-        '--',
-        dir,
-      ],
-      { cwd: root }
-    );
-  } catch {
-    return out;
-  }
-  const tokens = res.stdout.split('\0');
-  let i = 0;
-  while (i < tokens.length) {
-    const tok = tokens[i];
-    if (!tok) { i++; continue; }
-    const m = tok.match(/^COMMIT_TIME (\d+)\n([\s\S]*)$/);
-    if (!m) { i++; continue; }
-    const ct = Number(m[1]);
-    const inline = m[2].trim();
-    if (inline) out.set(inline, Math.max(out.get(inline) ?? 0, ct));
-    i++;
-    while (i < tokens.length && tokens[i] && !tokens[i].startsWith('COMMIT_TIME ')) {
-      const pth = tokens[i].trim();
-      if (pth) out.set(pth, Math.max(out.get(pth) ?? 0, ct));
-      i++;
-    }
-  }
-  return out;
-}
-
-async function effectiveMtime(file, commitTimes) {
-  let fsMtime = 0;
-  try {
-    const s = await stat(file);
-    fsMtime = Math.floor(s.mtimeMs / 1000);
-  } catch {}
-  const ct = commitTimes.get(rel(file));
-  if (ct === undefined) return fsMtime;
-  return Math.max(ct, fsMtime);
-}
-
-async function newestEffectiveMtime(files, commitTimes) {
-  let max = 0;
-  for (const f of files) {
-    const t = await effectiveMtime(f, commitTimes);
-    if (t > max) max = t;
-  }
-  return max;
-}
-
-async function effectiveMtimeOf(file, commitTimes) {
-  return effectiveMtime(file, commitTimes);
 }
 
 /* Extract all `export` symbols from a TS file by a simple text scan. */
@@ -270,7 +165,7 @@ async function checkPackage(pkgPath, pkgName) {
   if (srcFiles.length > 0) {
     const combined = await commitTimesUnder(pkgPath);
     const newest = await newestEffectiveMtime(srcFiles, combined);
-    const specT = await effectiveMtimeOf(specPath, combined);
+    const specT = await effectiveMtime(specPath, combined);
     if (specT < newest) {
       fail(pkgName, `specs/SPEC.md is older than the newest src/ change`);
     } else {

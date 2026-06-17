@@ -27,103 +27,18 @@
  *
  * Exits 0 if every package's SPEC.md is fresh, 1 otherwise.
  */
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const execFileP = promisify(execFile);
+import {
+  walk,
+  effectiveMtime,
+  commitTimesUnder,
+  root,
+} from './lib/git-mtime.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
-const root = join(here, '..');
 const packagesDir = join(root, 'packages');
-
-async function* walk(dir) {
-  let entries;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    return;
-  }
-  for (const e of entries) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) {
-      if (e.name === 'node_modules' || e.name === 'dist' || e.name === '.git') continue;
-      yield* walk(p);
-    } else {
-      yield p;
-    }
-  }
-}
-
-/* Return a Map<repo-relative-path, latest-commit-time-seconds> for
- * every path under <dir> that has been touched by some commit
- * reachable from HEAD. We do this in a single `git log` invocation
- * with a sentinel prefix on the commit-time line so the parser is
- * robust to paths that happen to be all digits. */
-async function commitTimesUnder(dir) {
-  const out = new Map();
-  let res;
-  try {
-    res = await execFileP(
-      'git',
-      [
-        'log',
-        '--pretty=format:COMMIT_TIME %ct',
-        '--name-only',
-        '--no-renames',
-        '-z',
-        'HEAD',
-        '--',
-        dir,
-      ],
-      { cwd: root }
-    );
-  } catch {
-    return out;
-  }
-  // With `-z`, `git log` emits records separated by NUL. Each
-  // record is: "COMMIT_TIME <digits>\n<path1>\0<path2>\0...\0".
-  // The first token after a NUL boundary is the commit-time header
-  // (ending in a newline), followed by one or more NUL-terminated
-  // path tokens, until the next "COMMIT_TIME ..." header.
-  const tokens = res.stdout.split('\0');
-  let i = 0;
-  while (i < tokens.length) {
-    const tok = tokens[i];
-    if (!tok) { i++; continue; }
-    const m = tok.match(/^COMMIT_TIME (\d+)\n([\s\S]*)$/);
-    if (!m) { i++; continue; }
-    const ct = Number(m[1]);
-    const inline = m[2].trim();
-    if (inline) {
-      out.set(inline, Math.max(out.get(inline) ?? 0, ct));
-    }
-    i++;
-    while (i < tokens.length && tokens[i] && !tokens[i].startsWith('COMMIT_TIME ')) {
-      const pth = tokens[i].trim();
-      if (pth) out.set(pth, Math.max(out.get(pth) ?? 0, ct));
-      i++;
-    }
-  }
-  return out;
-}
-
-function rel(file) {
-  return file.startsWith(root + '/') ? file.slice(root.length + 1) : file;
-}
-
-async function effectiveMtime(file, commitTimes) {
-  let fsMtime = 0;
-  try {
-    const s = await stat(file);
-    fsMtime = Math.floor(s.mtimeMs / 1000);
-  } catch {}
-  const ct = commitTimes.get(rel(file));
-  if (ct === undefined) return fsMtime; // never committed: filesystem only
-  return Math.max(ct, fsMtime);          // dirty file: filesystem mtime wins
-}
 
 let failed = false;
 const entries = await readdir(packagesDir, { withFileTypes: true });
