@@ -15,9 +15,13 @@
  *
  * Exit code 0 = all good. Exit code 1 = at least one violation.
  */
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const execFileP = promisify(execFile);
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const root = join(here, '..');
@@ -64,6 +68,80 @@ async function newestMtime(files) {
     } catch {}
   }
   return max;
+}
+
+/* Issue #11: filesystem-mtime comparisons are unreliable on fresh
+ * checkouts / git worktrees where wall-clock mtimes don't match
+ * commit-time ordering. Use git commit time as the source of
+ * truth, with filesystem mtime as the override for dirty/uncommitted
+ * files. Mirrors the logic in tools/spec-mtime.mjs. */
+function rel(file) {
+  return file.startsWith(root + '/') ? file.slice(root.length + 1) : file;
+}
+
+async function commitTimesUnder(dir) {
+  const out = new Map();
+  let res;
+  try {
+    res = await execFileP(
+      'git',
+      [
+        'log',
+        '--pretty=format:COMMIT_TIME %ct',
+        '--name-only',
+        '--no-renames',
+        '-z',
+        'HEAD',
+        '--',
+        dir,
+      ],
+      { cwd: root }
+    );
+  } catch {
+    return out;
+  }
+  const tokens = res.stdout.split('\0');
+  let i = 0;
+  while (i < tokens.length) {
+    const tok = tokens[i];
+    if (!tok) { i++; continue; }
+    const m = tok.match(/^COMMIT_TIME (\d+)\n([\s\S]*)$/);
+    if (!m) { i++; continue; }
+    const ct = Number(m[1]);
+    const inline = m[2].trim();
+    if (inline) out.set(inline, Math.max(out.get(inline) ?? 0, ct));
+    i++;
+    while (i < tokens.length && tokens[i] && !tokens[i].startsWith('COMMIT_TIME ')) {
+      const pth = tokens[i].trim();
+      if (pth) out.set(pth, Math.max(out.get(pth) ?? 0, ct));
+      i++;
+    }
+  }
+  return out;
+}
+
+async function effectiveMtime(file, commitTimes) {
+  let fsMtime = 0;
+  try {
+    const s = await stat(file);
+    fsMtime = Math.floor(s.mtimeMs / 1000);
+  } catch {}
+  const ct = commitTimes.get(rel(file));
+  if (ct === undefined) return fsMtime;
+  return Math.max(ct, fsMtime);
+}
+
+async function newestEffectiveMtime(files, commitTimes) {
+  let max = 0;
+  for (const f of files) {
+    const t = await effectiveMtime(f, commitTimes);
+    if (t > max) max = t;
+  }
+  return max;
+}
+
+async function effectiveMtimeOf(file, commitTimes) {
+  return effectiveMtime(file, commitTimes);
 }
 
 /* Extract all `export` symbols from a TS file by a simple text scan. */
@@ -186,13 +264,14 @@ async function checkPackage(pkgPath, pkgName) {
     return;
   }
 
-  // 2. mtime gate
+  // 2. mtime gate (issue #11: git-aware, see helpers above)
   const srcFiles = [];
   for await (const f of walk(join(pkgPath, 'src'))) srcFiles.push(f);
   if (srcFiles.length > 0) {
-    const newest = await newestMtime(srcFiles);
-    const specStat = await stat(specPath);
-    if (specStat.mtimeMs < newest) {
+    const combined = await commitTimesUnder(pkgPath);
+    const newest = await newestEffectiveMtime(srcFiles, combined);
+    const specT = await effectiveMtimeOf(specPath, combined);
+    if (specT < newest) {
       fail(pkgName, `specs/SPEC.md is older than the newest src/ change`);
     } else {
       ok(pkgName, `specs/SPEC.md is fresh`);
