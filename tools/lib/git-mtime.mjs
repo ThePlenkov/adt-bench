@@ -49,9 +49,14 @@ export function rel(file) {
 
 /* Return a Map<repo-relative-path, latest-commit-time-seconds> for
  * every path under <dir> that has been touched by some commit
- * reachable from HEAD. One `git log` invocation per call. */
+ * reachable from HEAD. One `git log` invocation per call.
+ *
+ * `dir` may be absolute or repo-relative; we always pass a
+ * repo-relative path to `git log` so the invocation is robust to
+ * the cwd of the spawned process and to symlinked worktrees. */
 export async function commitTimesUnder(dir) {
   const out = new Map();
+  const relDir = dir.startsWith(root + '/') ? dir.slice(root.length + 1) : dir;
   let res;
   try {
     res = await execFileP(
@@ -64,7 +69,7 @@ export async function commitTimesUnder(dir) {
         '-z',
         'HEAD',
         '--',
-        dir,
+        relDir,
       ],
       { cwd: root }
     );
