@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "test": "vitest run packages/mock-adt-server/src",
-    "typecheck": "tsc --noEmit -p packages/mock-adt-server/tsconfig.json"
+    "test": "vitest run src",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   }
 }
