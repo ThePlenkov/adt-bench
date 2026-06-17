@@ -29,13 +29,11 @@ const root = join(here, '..', '..');
  * repo-relative string we hand to `git log` is platform-independent
  * (git itself uses forward slashes regardless of the host OS). */
 function toRepoRelative(absOrRel) {
+  let tail = absOrRel;
   if (absOrRel.startsWith(root + sep) || absOrRel.startsWith(root + '/')) {
-    const tail = absOrRel.startsWith(root + sep)
-      ? absOrRel.slice(root.length + 1)
-      : absOrRel.slice(root.length + 1);
-    return tail.split(sep).join('/');
+    tail = absOrRel.slice(root.length + 1);
   }
-  return absOrRel.split(sep).join('/');
+  return tail.split(sep).join('/');
 }
 
 export async function* walk(dir) {
@@ -57,10 +55,7 @@ export async function* walk(dir) {
 }
 
 export function rel(file) {
-  if (file.startsWith(root + sep) || file.startsWith(root + '/')) {
-    return toRepoRelative(file);
-  }
-  return file.split(sep).join('/');
+  return toRepoRelative(file);
 }
 
 /* Return a Map<repo-relative-path, latest-commit-time-seconds> for
