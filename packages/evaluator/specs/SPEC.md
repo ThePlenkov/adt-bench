@@ -186,3 +186,4 @@ helper. The returned `rule` is `has-class`, not `changed:ZCL_BENCH_HELLO`.)
 No other runtime dependencies. The package MUST NOT import
 `@adt-bench/runner-*`, `@adt-bench/report`, or
 `@adt-bench/mock-adt-server`.
+

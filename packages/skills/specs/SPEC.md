@@ -177,3 +177,4 @@ None. This package has no `src/` and no imports.
 
 The harness (`@adt-bench/bench-cli`) reads the files at runtime
 via Node's `fs/promises`. The files are committed to the repo.
+

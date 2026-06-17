@@ -244,3 +244,4 @@ fails the spec-coverage check.
 
 No other runtime or dev dependencies. The package MUST NOT import
 `execa`, `fs`, `path`, or any agent library.
+

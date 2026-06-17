@@ -172,3 +172,4 @@ section is **absent** entirely (not just empty).
 - **zod 3.23.x** (transitive via the two packages above).
 
 No other runtime dependencies.
+
