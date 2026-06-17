@@ -54,7 +54,7 @@ Evidence:
   git history says the opposite. Sample
   (`packages/agent-runner`):
 
-  ```
+  ```text
   spec mtime:   2026-06-17 12:53:46.290032 UTC
   newest src:   2026-06-17 12:53:46.290376 UTC  (+344 ms newer)
   ```
@@ -94,7 +94,7 @@ is `max(commit_time_seconds, filesystem_mtime_seconds)`. This is
 
 Concrete changes (`git diff --stat origin/main`):
 
-```
+```text
  tools/spec-coverage.mjs |  87 +++++++++++++++++++++++++++++++++--
  tools/spec-mtime.mjs    | 120 +++++++++++++++++++++++++++++++++++++++++-------
  2 files changed, 187 insertions(+), 20 deletions(-)
@@ -124,7 +124,7 @@ Concrete changes (`git diff --stat origin/main`):
   - The §"2. mtime gate" inside `checkPackage` is rewritten to use
     `commitTimesUnder(pkgPath)` once and then
     `newestEffectiveMtime(srcFiles, combined)` /
-    `effectiveMtimeOf(specPath, combined)`. No other behavior
+    `effectiveMtime(specPath, combined)`. No other behavior
     changes.
 
 No other files were modified: no SPEC.md content changes, no

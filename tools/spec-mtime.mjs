@@ -33,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 import {
   walk,
   effectiveMtime,
+  newestEffectiveMtime,
   commitTimesUnder,
   root,
 } from './lib/git-mtime.mjs';
@@ -70,11 +71,7 @@ for (const e of entries) {
   // Single git log per package covering both src/ and specs/.
   const combined = await commitTimesUnder(pkg);
 
-  let newestSrc = 0;
-  for (const f of srcFiles) {
-    const t = await effectiveMtime(f, combined);
-    if (t > newestSrc) newestSrc = t;
-  }
+  const newestSrc = await newestEffectiveMtime(srcFiles, combined);
   const specT = await effectiveMtime(specPath, combined);
   if (specT < newestSrc) {
     console.error(

@@ -17,13 +17,26 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const execFileP = promisify(execFile);
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const root = join(here, '..', '..');
+
+/* Normalize an absolute path to forward-slash form so the
+ * repo-relative string we hand to `git log` is platform-independent
+ * (git itself uses forward slashes regardless of the host OS). */
+function toRepoRelative(absOrRel) {
+  if (absOrRel.startsWith(root + sep) || absOrRel.startsWith(root + '/')) {
+    const tail = absOrRel.startsWith(root + sep)
+      ? absOrRel.slice(root.length + 1)
+      : absOrRel.slice(root.length + 1);
+    return tail.split(sep).join('/');
+  }
+  return absOrRel.split(sep).join('/');
+}
 
 export async function* walk(dir) {
   let entries;
@@ -44,7 +57,10 @@ export async function* walk(dir) {
 }
 
 export function rel(file) {
-  return file.startsWith(root + '/') ? file.slice(root.length + 1) : file;
+  if (file.startsWith(root + sep) || file.startsWith(root + '/')) {
+    return toRepoRelative(file);
+  }
+  return file.split(sep).join('/');
 }
 
 /* Return a Map<repo-relative-path, latest-commit-time-seconds> for
@@ -56,7 +72,7 @@ export function rel(file) {
  * the cwd of the spawned process and to symlinked worktrees. */
 export async function commitTimesUnder(dir) {
   const out = new Map();
-  const relDir = dir.startsWith(root + '/') ? dir.slice(root.length + 1) : dir;
+  const relDir = toRepoRelative(dir);
   let res;
   try {
     res = await execFileP(
